@@ -1,0 +1,184 @@
+<html>
+<head>
+	<title></title>
+</head>
+<body >
+		
+	<canvas id="paper" width="1250" height="560">
+	</canvas>
+	<h1 align = 'right'><button onclick="startGame()">Start</button></h1>
+	<style type="text/css">
+		body{
+
+			background: -webkit-radial-gradient(yellow,white)
+		}
+	</style>
+	<font face="impact" color="blue">SCORE :</font><font id="demo" face="impact" color="blue">0</font>
+
+</body>
+	<script type="text/javascript">	
+	setInterval(function(){ myScore() }, 1000);
+
+	function myScore() {
+
+	  
+	    document.getElementById("demo").innerHTML = ship.score;
+	}
+	
+		var canvas = document.getElementById("paper");
+		var targetX = canvas.width / 2;
+		var targetY = canvas.height / 2;
+		var ship =  {
+			score :0,
+			x: 0, 
+			y: 0,
+			radius: 10 ,
+			color: 'red',
+			v: 1500,
+			moveTo: function(x, y, ms){				
+        	  if(this.x > x - this.radius && this.x < x + this.radius
+          		&& this.y > y - this.radius && this.y < y + this.radius)
+          		return;
+
+			var st = this.v * ms / 1000;
+			var diffy = y - this.y;
+			var diffx = x - this.x;
+			var zeta = Math.atan(Math.abs((y - this.y)/(x - this.x)));				
+			var dy = (diffx > 0 && diffy < 0) || (diffx < 0 && diffy < 0) ? - 1 : 1;
+			var dx = (diffx < 0 && diffy < 0) || (diffx < 0 && diffy > 0) ? -1 : 1;				
+			if(!isNaN(zeta)){
+				this.x += Math.cos(zeta) * st * dx;
+				this.y += Math.sin(zeta) * st * dy;	
+			}
+			if(this.x > canvas.width)
+				this.x = canvas.width;
+			else if (this.x < 0)
+				this.x = 0;
+			if(this.y > canvas.height)
+				this.y = canvas.height;
+			else if(this.y < 0)
+				this.y = 0;		
+					
+
+			}
+		};	
+		
+		var enemies = [];
+		var gameRunning = false;
+
+		var lastStamp = 0;
+		
+		setInterval(function(){
+			for(var i=0; i<=10; i++){
+				enemies.push(new Enemy());
+			}
+			
+			
+		
+		}, 400);
+		var x = 0;
+		setInterval(function(){
+			ship.score += x;
+
+		},1000);
+		
+		function draw(){
+			if(gameRunning){			
+				var currentStamp = new Date().getTime();
+				if(lastStamp != 0){
+					var ms = currentStamp - lastStamp;
+					ship.moveTo(targetX, targetY, ms);
+				}
+				if(isHit()){
+		        	gameRunning = false;
+		        	x = 0;
+
+		        }
+		        if(enemies.length != 0){
+		        	
+		        	for(var i = 0; i < enemies.length; i++)
+		        		enemies[i].move()
+		        }
+
+
+				var context = canvas.getContext('2d');
+				context.clearRect(0, 0, canvas.width, canvas.height);	
+				context.beginPath();
+		        context.arc(ship.x, ship.y, ship.radius, 0, 2 * Math.PI, false);
+		        context.fillStyle = ship.color;
+		        context.fill();
+
+		        for(var i = 0; i < enemies.length; i++){
+		        	context.beginPath();
+			        context.arc(enemies[i].x, enemies[i].y, enemies[i].radius, 0, 2 * Math.PI, false);
+			        context.fillStyle = 'blue';
+			        context.fill();
+		        }
+		      
+				lastStamp = currentStamp;
+			}
+			window.requestAnimationFrame(draw);
+		}
+		window.requestAnimationFrame(draw);
+
+		function isHit(){
+			for(var i = 0; i < enemies.length; i++){
+				if(distance(enemies[i].x, enemies[i].y,
+					ship.x, ship.y) < ship.radius){
+					return true;
+				}
+			}
+			return false;
+			
+		}
+			
+		function distance(x1, y1, x2, y2){
+			return Math.sqrt(Math.pow(y2 - y1, 2) + Math.pow(x2 - x1, 2));
+		}
+
+		function onClick(x, y){
+			console.log(x + ":" + y);
+		}
+
+		function startGame(){
+			ship.x = canvas.width / 2;
+			ship.y = canvas.height / 2;
+			gameRunning = true;
+			x = 1;
+		
+		}
+		
+        canvas.addEventListener('mousemove', function(evt) {
+	        var rect = canvas.getBoundingClientRect();
+	        targetX = evt.clientX - rect.left;
+	        targetY = evt.clientY - rect.top;	 
+      	}, false);
+
+      	canvas.addEventListener('mousedown', function(evt) {
+	        var rect = canvas.getBoundingClientRect();
+	        var x = evt.clientX - rect.left;
+	        var y = evt.clientY - rect.top;	 
+	        onClick(x, y);
+      	}, false);
+
+      	function Enemy(){
+
+      		this.x = Math.floor(Math.random()*canvas.width);
+      		this.y = Math.floor(Math.random()*canvas.height);
+      		this.lifetime = 1;
+      		this.radius = 2;  
+
+      	}
+      	Enemy.prototype.move = function(){
+      		this.y += 4;
+      		this.x += 4;
+      	}
+
+      	Enemy.prototype.live = function(ms){
+      		this.lifetime -= ms;
+      	}
+      	Enemy.prototype.isAlive = function(){
+      		return this.lifetime > 0; 
+      	}
+	</script>
+</html>
